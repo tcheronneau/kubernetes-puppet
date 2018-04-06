@@ -28,6 +28,13 @@ spec:
           name: ssl
         - containerPort: 8080
           name: http
+        env:
+        - name: PUPPETDB_DATABASE_CONNECTION
+          value: "//postgres:5432/puppet"
+        - name: PUPPETDB_USER
+          value: puppet
+        - name: PUPPETDB_PASSWORD
+          value: puppet
         volumeMounts:
         - name: puppetdbssl
           mountPath: /etc/puppetlabs/puppet/ssl/
