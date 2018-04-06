@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: puppet
+    role: database
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: puppet
+        role: database
+    spec:
+      nodeSelector:
+        node: loadbalancer
+      volumes:
+      - name: data-volume
+        hostPath:
+          path: "/var/lib/puppetgres/data/"
+      containers:
+      - name: postgres
+        image: puppet/puppetdb-postgres
+        ports:
+        - name: postgres
+          containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: puppetdb
+        - name: POSTGRES_USER
+          value: puppetdb
+        - name: POSTGRES_DB
+          value: puppetdb
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data/
+          name: data-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: puppet
+    role: database

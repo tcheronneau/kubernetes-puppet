@@ -1,0 +1,60 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: puppetboard
+  labels:
+    app: puppet
+    role: board
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: puppet
+        role: board
+    spec:
+      hostname: puppetboard
+      nodeSelector:
+        node: monitoring
+      containers:
+      - name: puppetboard
+        image: puppet/puppetboard
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PUPPETDB_HOST
+          value: puppetdb
+        - name: PUPPETDB_PORT
+          value: "8081"
+        - name: PUPPETDB_SSL_VERIFY
+          value: "False"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: puppet-board
+spec:
+  ports:
+  - name: puppetboard
+    port: 8000
+  selector:
+    app: puppet
+    role: board
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: puppetboard
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    ingress.kubernetes.io/auth-type: "basic"
+    ingress.kubernetes.io/auth-secret: "mysecret"
+spec:
+  rules:
+  - host: puppetboard.mcth.fr
+    http:
+      paths:
+      - backend:
+          serviceName: puppetboard
+          servicePort: 8000
